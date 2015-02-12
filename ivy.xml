@@ -22,14 +22,14 @@
                 <exclude org="javax.jms"/>
         </dependency>
         <dependency org="org.apache.hadoop" name="hadoop-core" rev="0.20.2"/>
-        <dependency org="org.apache.hive" name="hive-serde" rev="0.10.0" >
+        <dependency org="org.apache.hive" name="hive-serde" rev="0.13.1" >
                         <exclude org="commons-daemon" />
         </dependency>
-        <dependency org="org.apache.hive" name="hive-exec" rev="0.10.0" >
+        <dependency org="org.apache.hive" name="hive-exec" rev="0.13.1" >
    <exclude org="commons-daemon" />
         </dependency>
         <dependency org="javax.jdo" name="jdo2-api" rev="2.3-eb" force="true"/>
-        <dependency org="org.jboss.netty" name="netty" rev="3.2.9" force="true" />
+        <dependency org="org.jboss.netty" name="netty" rev="3.2.9.Final" force="true" />
 <!--<dependency org="commons-daemon" name="commons-daemon" rev="1.0.15" force="true"/>-->            
 
         <!--<dependency org="commons-lang" name="commons-lang" rev="2.5"/>
@@ -41,6 +41,7 @@
         <!-- Tests -->
         <dependency org="junit" name="junit" rev="4.11">
         </dependency>
+	<dependency org="org.scala-lang" name="scala-library" rev="2.10.4"/>
     </dependencies>
 </ivy-module>
 

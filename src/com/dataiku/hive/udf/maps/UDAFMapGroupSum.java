@@ -1,6 +1,7 @@
 package com.dataiku.hive.udf.maps;
 
-import com.google.common.collect.Maps;
+import scala.Tuple2;
+
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
@@ -47,25 +48,9 @@ public class UDAFMapGroupSum extends AbstractGenericUDAFResolver {
             valueOI = (IntObjectInspector) originalDataOI.getMapValueObjectInspector();
             return ObjectInspectorFactory.getStandardMapObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector,
                         PrimitiveObjectInspectorFactory.javaIntObjectInspector);
-
-
-
-//            /* Setup input OI */
-//            if (m == Mode.PARTIAL1 || m == Mode.COMPLETE) {
-//                /* Input is original data */
-//                originalDataOI = parameters[0];
-//            } else if (m == Mode.PARTIAL2 || m == Mode.FINAL){
-//                /* Input is list of original data */
-//                listOI = (StandardListObjectInspector) parameters[0];
-//                originalDataOI = listOI.getListElementObjectInspector();
-//            }
-//
-//            /* Output OI : always a list of original data */
-//            return ObjectInspectorFactory
-//                    .getStandardListObjectInspector(ObjectInspectorUtils.getStandardObjectInspector(originalDataOI));
         }
 
-        static class MapBuffer implements AggregationBuffer {
+        static class MapBuffer extends AbstractAggregationBuffer {
             Map<String, Integer> map = new HashMap<String, Integer>();
         }
 
@@ -99,11 +84,23 @@ public class UDAFMapGroupSum extends AbstractGenericUDAFResolver {
 
         @Override
         public void iterate(AggregationBuffer ab, Object[] parameters)  throws HiveException {
+	    Map<Object,Object> finalMap = new HashMap<Object,Object>();
+
             assert (parameters.length == 1);
             Object p = parameters[0];
+
+	    scala.collection.immutable.Map m = (scala.collection.immutable.Map) p;
+	    
+	    scala.collection.Iterator iter = m.keysIterator();
+	    
+	    while(iter.hasNext()){
+		String key = (String)iter.next();
+		finalMap.put(key, (Integer)m.get(key).get());
+	    }
+	    
             if (p != null) {
                 MapBuffer agg = (MapBuffer) ab;
-                Map<Object, Object> o = (Map<Object, Object>) this.originalDataOI.getMap(p);
+                Map<Object, Object> o = (Map<Object, Object>) this.originalDataOI.getMap(finalMap);
                 mapAppend(agg.map, o);
             }
         }
@@ -111,7 +108,7 @@ public class UDAFMapGroupSum extends AbstractGenericUDAFResolver {
         @Override
         public Object terminatePartial(AggregationBuffer ab) throws HiveException {
             MapBuffer agg = (MapBuffer) ab;
-            return Maps.newHashMap(agg.map);
+	    return new HashMap<Object,Object>(agg.map);
         }
 
         @Override
@@ -125,7 +122,7 @@ public class UDAFMapGroupSum extends AbstractGenericUDAFResolver {
         @Override
         public Object terminate(AggregationBuffer ab)  throws HiveException {
             MapBuffer agg = (MapBuffer) ab;
-            return Maps.newHashMap(agg.map);
+	    return new HashMap<Object,Object>(agg.map);
         }
     }
 }
