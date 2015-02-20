@@ -59,7 +59,7 @@ public class UDAFCollectToArray extends AbstractGenericUDAFResolver {
                     .getStandardListObjectInspector(ObjectInspectorUtils.getStandardObjectInspector(originalDataOI));
         }
 
-        static class ArrayAggregationBuffer implements AggregationBuffer {
+        static class ArrayAggregationBuffer extends AbstractAggregationBuffer {
             ArrayList<Object> container = new ArrayList<Object>();
         }
 
@@ -69,7 +69,7 @@ public class UDAFCollectToArray extends AbstractGenericUDAFResolver {
         }
 
         @Override
-        public AggregationBuffer getNewAggregationBuffer() throws HiveException {
+        public AbstractAggregationBuffer getNewAggregationBuffer() throws HiveException {
             return new ArrayAggregationBuffer();
         }
 

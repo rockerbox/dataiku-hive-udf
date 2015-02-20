@@ -30,27 +30,28 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.Object
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 
 public abstract class UDAFFirstOrLastOfGroupAccordingTo extends AbstractGenericUDAFResolver {
-    protected void checkParameters(GenericUDAFParameterInfo info) throws SemanticException {
-        if (info.getParameterObjectInspectors().length != 2) {
+    protected void checkParameters(TypeInfo[] tis) throws SemanticException {
+        if (tis.length != 2) {
             throw new UDFArgumentException("Two arguments are required");
         }
 
-        if (info.getParameterObjectInspectors()[0].getCategory() != ObjectInspector.Category.PRIMITIVE) {
+        if (tis[0].getCategory() != ObjectInspector.Category.PRIMITIVE) {
             throw new UDFArgumentTypeException(0, 
                     "Only primitive type arguments are accepted but "
-                            + info.getParameterObjectInspectors()[0].getTypeName() + " was passed in");
+                            + tis[0].getTypeName() + " was passed in");
         }
-        if (info.getParameterObjectInspectors()[1].getCategory() != ObjectInspector.Category.PRIMITIVE) {
+        if (tis[1].getCategory() != ObjectInspector.Category.PRIMITIVE) {
             throw new UDFArgumentTypeException(1, 
                     "Only primitive type arguments are accepted but "
-                            + info.getParameterObjectInspectors()[1].getTypeName() + " was passed in");
+                            + tis[1].getTypeName() + " was passed in");
         }
     }
 
     public static abstract class BaseEvaluator extends GenericUDAFEvaluator {
-        static class UDAFFOGATBuffer implements AggregationBuffer {
+        static class UDAFFOGATBuffer extends AbstractAggregationBuffer {
             Object outColKeptValue;
             Object sortColKeptValue;
         }
@@ -103,8 +104,8 @@ public abstract class UDAFFirstOrLastOfGroupAccordingTo extends AbstractGenericU
         }
 
         @Override
-        public AggregationBuffer getNewAggregationBuffer() throws HiveException {
-            AggregationBuffer o= new UDAFFOGATBuffer();
+        public AbstractAggregationBuffer getNewAggregationBuffer() throws HiveException {
+            AbstractAggregationBuffer o= new UDAFFOGATBuffer();
             //System.out.println(Thread.currentThread().getName() + ": NEW BUFFER " +o);
             return o;
         }
@@ -122,8 +123,6 @@ public abstract class UDAFFirstOrLastOfGroupAccordingTo extends AbstractGenericU
             UDAFFOGATBuffer bbuf = (UDAFFOGATBuffer)buf;
             Object outColVal = args[0];
             Object sortColVal = args[1];
-            //System.out.println(Thread.currentThread().getName() + ": ITERATE ON " + outColVal + " (" + sortColVal + ") to " +bbuf);
-            //System.out.println("    BBUF HAS " + bbuf.outColKeptValue+ " " +bbuf.sortColKeptValue);
             updateBuf(bbuf, outColVal, sortColVal);
         }
 
@@ -165,9 +164,7 @@ public abstract class UDAFFirstOrLastOfGroupAccordingTo extends AbstractGenericU
             Object[] out = new  Object[2];
             out[0] = (bbuf.outColKeptValue);
             out[1] = (bbuf.sortColKeptValue);
-            // System.out.println("TERMINATE PARTIAL RETURN " + out[0] +  " -- " + out[1] + " soi is " + soi);
             return out;
         }
     }
-
 }
