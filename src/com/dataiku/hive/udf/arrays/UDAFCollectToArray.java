@@ -15,6 +15,11 @@
  */
 package com.dataiku.hive.udf.arrays;
 
+import scala.collection.mutable.ArrayBuffer;
+import scala.collection.mutable.Buffer;
+import scala.collection.Seq;
+import scala.collection.JavaConversions;
+
 import java.util.ArrayList;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -79,7 +84,22 @@ public class UDAFCollectToArray extends AbstractGenericUDAFResolver {
             Object p = parameters[0];
             if (p != null) {
                 ArrayAggregationBuffer agg = (ArrayAggregationBuffer) ab;
-                agg.container.add(ObjectInspectorUtils.copyToStandardObject(p, this.originalDataOI));
+		if (p instanceof scala.collection.mutable.ArrayBuffer) {
+		    System.out.println("FOUND A SCALA ARRAYBUFFER");
+		    System.out.println(p.getClass().getName());
+		    ArrayList<Object> finalList = new ArrayList<Object>();
+		    scala.collection.mutable.ArrayBuffer b =  (scala.collection.mutable.ArrayBuffer) p;
+		    scala.collection.Iterator iter = b.toIterator();
+		    while(iter.hasNext()){
+			Object o = iter.next();
+			finalList.add(o);
+		    }
+
+		    agg.container.add(finalList);
+		}
+		else{
+		    agg.container.add(ObjectInspectorUtils.copyToStandardObject(p, this.originalDataOI));
+		}
             }
         }
 
